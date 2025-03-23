@@ -2,134 +2,273 @@
 
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
+import { useState, useEffect } from "react"
 import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { enUS } from 'date-fns/locale'
+import { FundProjectModal } from "./FundProjectModal"
+import { toast } from "sonner"
+import { calculateTimeLeft } from "@/app/lib/utils"
 
 interface Project {
   id: string
   projectId: string
   creator: string
-  goal: string
-  deadline: string
-  imageBase64?: string
-  createdAt: string | { seconds: number; nanoseconds: number }
-  donationsXLM: string
+  goal: number
+  deadline: string | { seconds: number; nanoseconds: number }
+  donationsXLM: number
   description: string
+  imageBase64?: string | null
+  createdAt: string | { seconds: number; nanoseconds: number }
 }
 
 interface ProjectDetailsModalProps {
-  project: Project | null
   isOpen: boolean
   onClose: () => void
-  onDonate: (projectId: string) => void
+  project: Project
+  onProjectUpdate: (updatedProject: Project) => void
 }
 
-export function ProjectDetailsModal({ project, isOpen, onClose, onDonate }: ProjectDetailsModalProps) {
-  if (!project) return null
+function formatDate(date: string | { seconds: number; nanoseconds: number }) {
+  try {
+    if (typeof date === 'string') {
+      return format(new Date(date), 'MMM dd yyyy', { locale: enUS })
+    }
+    if ('seconds' in date) {
+      return format(new Date(date.seconds * 1000), 'MMM dd yyyy', { locale: enUS })
+    }
+    return 'Date not available'
+  } catch (error) {
+    console.error('Error formatting date:', error)
+    return 'Date not available'
+  }
+}
 
-  const calculateProgress = (donationsXLM: string, goal: string) => {
-    const donations = parseFloat(donationsXLM || '0')
-    const targetGoal = parseFloat(goal || '0')
-    if (targetGoal === 0) return 0
-    return Math.min((donations / targetGoal) * 100, 100)
+export function ProjectDetailsModal({
+  isOpen,
+  onClose,
+  project,
+  onProjectUpdate,
+}: ProjectDetailsModalProps) {
+  const [isFundModalOpen, setIsFundModalOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [walletAddress, setWalletAddress] = useState<string | null>(null)
+  const [currentProject, setCurrentProject] = useState<Project>(project)
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft(project.deadline))
+
+  useEffect(() => {
+    // Acceder a localStorage solo en el lado del cliente
+    const address = localStorage.getItem('walletAddress')
+    setWalletAddress(address)
+  }, [])
+
+  useEffect(() => {
+    setCurrentProject(project)
+    setTimeLeft(calculateTimeLeft(project.deadline))
+  }, [project])
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft(currentProject.deadline))
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [isOpen, currentProject.deadline])
+
+  if (!currentProject) {
+    return null
   }
 
-  const formatDate = (date: string | { seconds: number; nanoseconds: number }) => {
+  const progress = (currentProject.donationsXLM / currentProject.goal) * 100
+  const canClaim = currentProject.creator === walletAddress && progress >= 80
+
+  const handleDonate = async (amount: number) => {
+    setIsLoading(true)
     try {
-      if (typeof date === 'string') {
-        return format(new Date(date), 'dd MMM yyyy', { locale: es })
+      const response = await fetch('/api/projects/donate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-wallet-address': walletAddress || '',
+        },
+        body: JSON.stringify({
+          projectId: currentProject.id,
+          amount,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Error processing donation')
       }
-      // Si es un timestamp de Firestore
-      if ('seconds' in date) {
-        return format(new Date(date.seconds * 1000), 'dd MMM yyyy', { locale: es })
+
+      const data = await response.json()
+      
+      const updatedProject = {
+        ...currentProject,
+        donationsXLM: data.donationsXLM
       }
-      return 'Fecha no disponible'
+      
+      setCurrentProject(updatedProject)
+      onProjectUpdate(updatedProject)
+      setIsFundModalOpen(false)
+
+      toast.success("Donation successful!", {
+        description: `You have donated ${amount} XLM to project ${currentProject.projectId}`,
+      })
     } catch (error) {
-      console.error('Error al formatear la fecha:', error)
-      return 'Fecha no disponible'
+      console.error('Error donating:', error)
+      toast.error("Error processing donation", {
+        description: error instanceof Error ? error.message : "Please try again later",
+      })
+      throw error
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleClaim = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/projects/claim', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-wallet-address': walletAddress || '',
+        },
+        body: JSON.stringify({
+          projectId: currentProject.projectId,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Error claiming funds')
+      }
+
+      toast.success("Funds claimed successfully!", {
+        description: `You have claimed ${currentProject.donationsXLM} XLM from project ${currentProject.projectId}`,
+      })
+    } catch (error) {
+      console.error('Error claiming:', error)
+      toast.error("Error claiming funds", {
+        description: "Please try again later",
+      })
+    } finally {
+      setIsLoading(false)
     }
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto bg-black/90 text-white border-white/10 p-0">
-        <div className="grid grid-cols-1 lg:grid-cols-2 h-full">
-          {/* Columna de la imagen */}
-          <div className="relative h-[40vh] lg:h-[90vh] w-full overflow-hidden">
-            {project.imageBase64 ? (
-              <div className="relative w-full h-full group cursor-zoom-in">
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-[95vw] max-h-[90vh] bg-black/90 border border-white/10 text-white overflow-y-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Project Image */}
+            <div className="relative aspect-square lg:aspect-auto lg:h-[90vh] rounded-lg overflow-hidden group">
+              {currentProject.imageBase64 ? (
                 <img
-                  src={project.imageBase64}
-                  alt={project.projectId}
-                  className="absolute inset-0 w-full h-full object-contain transition-transform duration-300 group-hover:scale-110"
+                  src={currentProject.imageBase64}
+                  alt={currentProject.projectId}
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            ) : (
-              <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                <span className="text-white/40">Sin imagen</span>
-              </div>
-            )}
-          </div>
+              ) : (
+                <div className="w-full h-full bg-black/50 flex items-center justify-center">
+                  <span className="text-white/50">No image</span>
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
 
-          {/* Columna de detalles */}
-          <div className="p-8 space-y-8 overflow-y-auto">
-            <div className="space-y-4">
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-                {project.projectId}
-              </h2>
-              <p className="text-lg text-white/60">
-                Creado por: {project.creator}
-              </p>
-              <div className="bg-white/5 rounded-lg p-4">
-                <h3 className="text-lg font-semibold mb-2">Descripción del Proyecto</h3>
-                <p className="text-white/80 whitespace-pre-wrap">
-                  {project.description || "Sin descripción disponible"}
+            {/* Project Details */}
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold mb-2">{currentProject.projectId}</h2>
+                <p className="text-white/70">Created by: {currentProject.creator}</p>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">Description</h3>
+                <p className="text-white/80 whitespace-pre-wrap">{currentProject.description || "No description"}</p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Progress</span>
+                  <span>{progress.toFixed(1)}%</span>
+                </div>
+                <div className="h-4 bg-white/10 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary to-purple-600 transition-all duration-500"
+                    style={{ width: `${Math.min(progress, 100)}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-sm text-white/70">
+                  <span>{currentProject.donationsXLM} XLM</span>
+                  <span>{currentProject.goal} XLM</span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">Time Remaining</h3>
+                {timeLeft.isExpired ? (
+                  <p className="text-red-400">Project has expired</p>
+                ) : (
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="bg-white/5 rounded-lg p-2 text-center">
+                      <div className="text-2xl font-bold">{timeLeft.days}</div>
+                      <div className="text-sm text-white/70">Days</div>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-2 text-center">
+                      <div className="text-2xl font-bold">{timeLeft.hours}</div>
+                      <div className="text-sm text-white/70">Hours</div>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-2 text-center">
+                      <div className="text-2xl font-bold">{timeLeft.minutes}</div>
+                      <div className="text-sm text-white/70">Minutes</div>
+                    </div>
+                    <div className="bg-white/5 rounded-lg p-2 text-center">
+                      <div className="text-2xl font-bold">{timeLeft.seconds}</div>
+                      <div className="text-sm text-white/70">Seconds</div>
+                    </div>
+                  </div>
+                )}
+                <p className="text-sm text-white/70">
+                  Deadline: {formatDate(currentProject.deadline)}
                 </p>
               </div>
-            </div>
 
-            <div className="space-y-6">
-              <div className="space-y-3">
-                <div className="flex justify-between text-lg">
-                  <span className="text-white/60">Progreso de la meta</span>
-                  <span className="font-semibold">{project.donationsXLM || '0'} / {project.goal} XLM</span>
-                </div>
-                <Progress 
-                  value={calculateProgress(project.donationsXLM, project.goal)} 
-                  className="h-4"
-                />
-                <div className="text-base text-right text-white/60">
-                  {calculateProgress(project.donationsXLM, project.goal).toFixed(1)}% completado
-                </div>
-              </div>
-
-              <div className="space-y-4 bg-white/5 rounded-lg p-4">
-                <div className="flex justify-between text-base">
-                  <span className="text-white/60">Fecha límite</span>
-                  <span className="font-semibold">
-                    {formatDate(project.deadline)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-base">
-                  <span className="text-white/60">Fecha de creación</span>
-                  <span className="font-semibold">
-                    {formatDate(project.createdAt)}
-                  </span>
-                </div>
+              <div className="flex gap-4 pt-4">
+                <Button
+                  onClick={() => setIsFundModalOpen(true)}
+                  className="flex-1 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700"
+                  disabled={isLoading || timeLeft.isExpired}
+                >
+                  Donate
+                </Button>
+                {canClaim && (
+                  <Button
+                    onClick={handleClaim}
+                    className="bg-green-600 hover:bg-green-700"
+                    disabled={isLoading}
+                  >
+                    Claim
+                  </Button>
+                )}
               </div>
             </div>
-
-            <Button
-              onClick={() => onDonate(project.id)}
-              className="w-full h-14 text-xl font-semibold bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700"
-            >
-              Donar a este proyecto
-            </Button>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <FundProjectModal
+        isOpen={isFundModalOpen}
+        onClose={() => setIsFundModalOpen(false)}
+        projectId={currentProject.projectId}
+        goal={currentProject.goal}
+        currentDonations={currentProject.donationsXLM}
+        onDonate={handleDonate}
+      />
+    </>
   )
 } 

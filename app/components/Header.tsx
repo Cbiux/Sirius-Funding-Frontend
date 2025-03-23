@@ -1,17 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Star, Wallet, X } from "lucide-react";
+import { Star, Wallet, X, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { connectWallet, disconnectWallet } from "../wallets/walletsKit";
 import { stellarService } from "@/services/stellar.service";
 import Link from "next/link";
 import { ProjectsModal } from "./ProjectsModal";
+import { useTheme } from "@/components/theme-provider";
 
 export function Header() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [balance, setBalance] = useState<string>("0");
   const [isProjectsModalOpen, setIsProjectsModalOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const checkWalletConnection = () => {
@@ -43,15 +45,17 @@ export function Header() {
 
   const handleConnect = async () => {
     await connectWallet();
+    setWalletAddress(localStorage.getItem("walletAddress"));
   };
 
   const handleDisconnect = async () => {
     await disconnectWallet();
+    setWalletAddress(null);
   };
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black/50 backdrop-blur-md border-b border-white/10">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-background dark:bg-background-dark border-b border-border dark:border-border-dark backdrop-blur-md">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <Star className="h-6 w-6 text-primary" />
@@ -66,7 +70,7 @@ export function Header() {
                 <a
                   key={item}
                   href={`#${item.toLowerCase()}`}
-                  className="text-sm text-white/80 hover:text-primary transition-colors"
+                  className="text-sm text-text dark:text-text-dark hover:text-primary transition-colors"
                 >
                   {item}
                 </a>
@@ -77,17 +81,26 @@ export function Header() {
               <Link href="/marketplace">
                 <Button
                   variant="ghost"
-                  className="text-white hover:text-primary hover:bg-white/5"
+                  className="text-text dark:text-text-dark hover:text-primary hover:bg-white/5"
                 >
-                  Proyectos
+                  Projects
                 </Button>
               </Link>
               <Link href="/projects">
                 <Button className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700">
-                  Crear Proyecto
+                  Create Project
                 </Button>
               </Link>
             </nav>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="text-text dark:text-text-dark"
+            >
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
 
             {walletAddress ? (
               <div className="flex items-center gap-2">

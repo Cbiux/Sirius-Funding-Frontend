@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Loader2 } from "lucide-react"
 import { format } from 'date-fns'
-import { es } from 'date-fns/locale'
+import { enUS } from 'date-fns/locale'
 
 interface Project {
   id: string
@@ -15,7 +15,7 @@ interface Project {
   deadline: string
   imageBase64?: string
   createdAt: string
-  donationsXLM: string // Total de donaciones recibidas
+  donationsXLM: string // Total donations received
 }
 
 interface ProjectsModalProps {
@@ -36,7 +36,7 @@ export function ProjectsModal({ isOpen, onClose }: ProjectsModalProps) {
           setProjects(data.projects)
         }
       } catch (error) {
-        console.error('Error al cargar los proyectos:', error)
+        console.error('Error loading projects:', error)
       } finally {
         setLoading(false)
       }
@@ -55,8 +55,8 @@ export function ProjectsModal({ isOpen, onClose }: ProjectsModalProps) {
   }
 
   const handleDonate = (projectId: string) => {
-    // TODO: Implementar la lógica de donación
-    console.log('Donar a proyecto:', projectId)
+    // TODO: Implement donation logic
+    console.log('Donate to project:', projectId)
   }
 
   return (
@@ -64,7 +64,7 @@ export function ProjectsModal({ isOpen, onClose }: ProjectsModalProps) {
       <DialogContent className="max-w-6xl bg-black/90 text-white border-white/10">
         <div className="p-6">
           <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-            Proyectos Disponibles
+            Available Projects
           </h2>
 
           {loading ? (
@@ -84,7 +84,7 @@ export function ProjectsModal({ isOpen, onClose }: ProjectsModalProps) {
                       />
                     ) : (
                       <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                        <span className="text-white/40">Sin imagen</span>
+                        <span className="text-white/40">No image</span>
                       </div>
                     )}
                   </div>
@@ -92,14 +92,14 @@ export function ProjectsModal({ isOpen, onClose }: ProjectsModalProps) {
                   <CardHeader className="space-y-1">
                     <h3 className="text-xl font-semibold">{project.projectId}</h3>
                     <p className="text-sm text-white/60 truncate">
-                      Creador: {project.creator}
+                      Creator: {project.creator}
                     </p>
                   </CardHeader>
 
-                  <CardContent className="space-y-4">
+                  <CardContent>
                     <div className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-white/60">Progreso</span>
+                        <span className="text-white/60">Progress</span>
                         <span>{project.donationsXLM || '0'} / {project.goal} XLM</span>
                       </div>
                       <Progress 
@@ -107,15 +107,15 @@ export function ProjectsModal({ isOpen, onClose }: ProjectsModalProps) {
                         className="h-2"
                       />
                       <div className="text-xs text-right text-white/60">
-                        {calculateProgress(project.donationsXLM, project.goal).toFixed(1)}% completado
+                        {calculateProgress(project.donationsXLM, project.goal).toFixed(1)}% completed
                       </div>
                     </div>
 
                     <div className="space-y-1">
                       <div className="flex justify-between text-sm">
-                        <span className="text-white/60">Fecha límite</span>
+                        <span className="text-white/60">Deadline</span>
                         <span>
-                          {format(new Date(project.deadline), 'dd MMM yyyy', { locale: es })}
+                          {format(new Date(project.deadline), 'MMM dd yyyy', { locale: enUS })}
                         </span>
                       </div>
                     </div>
@@ -126,7 +126,7 @@ export function ProjectsModal({ isOpen, onClose }: ProjectsModalProps) {
                       onClick={() => handleDonate(project.id)}
                       className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700"
                     >
-                      Donar
+                      Donate
                     </Button>
                   </CardFooter>
                 </Card>

@@ -1,4 +1,10 @@
 export class StellarService {
+  buildClient<T>(creator: string) {
+    throw new Error('Method not implemented.');
+  }
+  submitTransaction(signedTxXdr: string) {
+    throw new Error('Method not implemented.');
+  }
   private readonly serverUrl: string;
 
   constructor() {

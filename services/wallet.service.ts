@@ -5,6 +5,7 @@ import {
   FreighterModule,
   ISupportedWallet,
 } from "@creit.tech/stellar-wallets-kit";
+import { clear } from "console";
 
 class WalletService {
   private kit: StellarWalletsKit;
@@ -18,7 +19,8 @@ class WalletService {
     });
   }
 
-  async connect(): Promise<string> {
+  async connect(): Promise<string> {clear
+    
     return new Promise(async (resolve) => {
       await this.kit.openModal({
         onWalletSelected: async (option: ISupportedWallet) => {
