@@ -129,9 +129,18 @@ export default function ProjectsPage() {
 
     setIsLoading(true);
     try {
-      // TODO: Implement project creation
-      console.log("Creating project:", formData);
-      toast.success("Project created successfully!", {
+      const projectData = {
+        projectId: formData.projectId,
+        creator: formData.creator,
+        goal: Number(formData.goal),
+        deadline: formData.deadline as Date,
+        description: formData.description,
+        imageBase64: formData.imageBase64,
+      };
+
+      await createProject(projectData);
+
+      toast.success("¡Proyecto creado exitosamente!", {
         className: "bg-card dark:bg-card-dark text-text dark:text-text-dark border border-border dark:border-border-dark",
         style: {
           background: "var(--background)",
@@ -139,9 +148,21 @@ export default function ProjectsPage() {
           borderColor: "var(--border)",
         },
       });
+
+      // Limpiar el formulario
+      setFormData({
+        projectId: "",
+        creator: "",
+        goal: "",
+        deadline: null,
+        imageBase64: null,
+        description: "",
+      });
+      
     } catch (error) {
-      console.error("Error creating project:", error);
-      toast.error("Error creating project", {
+      console.error("Error al crear el proyecto:", error);
+      toast.error("Error al crear el proyecto", {
+        description: error instanceof Error ? error.message : "Ocurrió un error inesperado",
         className: "bg-card dark:bg-card-dark text-text dark:text-text-dark border border-border dark:border-border-dark",
         style: {
           background: "var(--background)",
