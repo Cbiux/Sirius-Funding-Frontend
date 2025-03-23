@@ -358,32 +358,35 @@ export default function Home() {
             {/* Contacto */}
             <div>
               <h4 className="font-semibold mb-4 group-hover:text-primary transition-colors duration-300">Contact Us</h4>
-              <ul className="space-y-3">
-                <li className="flex items-center space-x-2 text-text/60 dark:text-text-dark/60 group hover:text-primary transition-colors duration-300">
-                  <Mail className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
-                  <span>contact@siriusfunding.com</span>
-                </li>
-                <li className="flex items-center space-x-2 text-text/60 dark:text-text-dark/60 group hover:text-primary transition-colors duration-300">
-                  <Phone className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
-                  <span>+1 (555) 123-4567</span>
-                </li>
-                <li className="flex items-center space-x-2 text-text/60 dark:text-text-dark/60 group hover:text-primary transition-colors duration-300">
-                  <MapPin className="h-4 w-4 group-hover:scale-110 transition-transform duration-300" />
-                  <span>San Francisco, CA</span>
-                </li>
-              </ul>
-              <div className="flex space-x-4 mt-6">
-                <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-text/60 dark:text-text-dark/60 hover:text-primary hover:scale-110 transition-all duration-300">
-                  <Github className="h-5 w-5" />
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3 group">
+                  <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    <Mail className="w-5 h-5 text-primary" />
+                  </div>
+                  <a href="mailto:contact.sirius.funding@gmail.com" className="text-text/80 dark:text-text-dark/80 group-hover:text-primary dark:group-hover:text-primary transition-colors">
+                    contact.sirius.funding@gmail.com
+                  </a>
+                </div>
+                <div className="flex items-center space-x-3 group">
+                  <div className="p-2 rounded-full bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    <MapPin className="w-5 h-5 text-primary" />
+                  </div>
+                  <span className="text-text/80 dark:text-text-dark/80 group-hover:text-primary dark:group-hover:text-primary transition-colors">
+                    Aleph, Argentina
+                  </span>
+                </div>
+              </div>
+              <div className="flex space-x-4">
+                <a href="https://github.com/sirius-funding" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
+                  <Github className="w-5 h-5 text-primary" />
                 </a>
-                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-text/60 dark:text-text-dark/60 hover:text-primary hover:scale-110 transition-all duration-300">
-                  <Twitter className="h-5 w-5" />
+                <a href="https://x.com/FundingSir27159" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
+                  <svg className="w-5 h-5 text-primary" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+                  </svg>
                 </a>
-                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-text/60 dark:text-text-dark/60 hover:text-primary hover:scale-110 transition-all duration-300">
-                  <Linkedin className="h-5 w-5" />
-                </a>
-                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-text/60 dark:text-text-dark/60 hover:text-primary hover:scale-110 transition-all duration-300">
-                  <Facebook className="h-5 w-5" />
+                <a href="https://linkedin.com/company/sirius-funding" target="_blank" rel="noopener noreferrer" className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
+                  <Linkedin className="w-5 h-5 text-primary" />
                 </a>
               </div>
             </div>
