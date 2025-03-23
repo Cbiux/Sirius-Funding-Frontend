@@ -95,7 +95,7 @@ export default function Home() {
           <div className="flex items-center justify-center mb-6">
             <Star className="h-12 w-12 text-primary animate-pulse" />
           </div>
-          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent pb-2">
             Sirius Funding
           </h1>
           <p className="text-xl mb-8 text-text/80 dark:text-text-dark/80">
